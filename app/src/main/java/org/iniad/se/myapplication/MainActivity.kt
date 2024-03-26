@@ -9,8 +9,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -18,9 +22,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -46,12 +52,19 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyTodoApp() {
     val todo = remember { mutableStateOf("") }
     val todoList = remember { mutableStateListOf<String>() }
 
+    MyTodoAppContent(todo = todo, todoList = todoList)
+}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MyTodoAppContent(
+    todo: MutableState<String>,
+    todoList: SnapshotStateList<String>
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -59,7 +72,6 @@ fun MyTodoApp() {
             )
         }
     ) { paddingValue ->
-
         Column(
             modifier = Modifier
                 .padding(paddingValue)
@@ -69,7 +81,6 @@ fun MyTodoApp() {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 16.dp)
             ) {
-                Text(text = "ToDo", fontSize = 32.sp)
                 TextField(
                     value = todo.value,
                     onValueChange = { text -> todo.value = text },
@@ -81,16 +92,18 @@ fun MyTodoApp() {
                     todoList.add(todo.value)
                     todo.value = ""
                 }) {
-                    Text(text = "append")
+                    Text(text = "追加")
                 }
             }
-            todoList.forEach { item ->
-                TodoItem(text = item)
+            todoList.forEachIndexed { index, item ->
+                TodoItem(
+                    text = item,
+                    deleteTodo = { todoList.removeAt(index) }
+                )
             }
         }
     }
 }
-
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
@@ -106,8 +119,27 @@ fun GreetingPreview() {
         MyTodoApp()
     }
 }
-
+@Preview(showBackground = true)
 @Composable
-fun TodoItem(text: String) {
-    Text(text = text, modifier = Modifier.padding(vertical = 4.dp))
+fun DefaultPreview() {
+    MyApplicationTheme {
+        MyTodoAppContent(
+            todo = remember { mutableStateOf("文字を入れています???") },
+            todoList = remember { mutableStateListOf("長い長い長い長い長い長い長い長い長い長い長い長い長い TODO", "TODO 2") }
+        )
+    }
+}
+@Composable
+fun TodoItem(text: String, deleteTodo: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = text,
+            modifier = Modifier
+                .padding(vertical = 4.dp)
+                .weight(1f)
+        )
+        IconButton(onClick = { deleteTodo() }) {
+            Icon(imageVector = Icons.Default.Delete, contentDescription ="削除ボタン")
+        }
+    }
 }
