@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,6 +31,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,7 +57,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyTodoApp() {
     val todo = remember { mutableStateOf("") }
-    val todoList = remember { mutableStateListOf<String>() }
+//    val todoList = remember { mutableStateListOf<String>() }
+    val todoList = remember { mutableStateListOf<Todo>() }
 
     MyTodoAppContent(todo = todo, todoList = todoList)
 }
@@ -63,7 +66,8 @@ fun MyTodoApp() {
 @Composable
 fun MyTodoAppContent(
     todo: MutableState<String>,
-    todoList: SnapshotStateList<String>
+//    todoList: SnapshotStateList<String>
+    todoList: SnapshotStateList<Todo>
 ) {
     Scaffold(
         topBar = {
@@ -89,7 +93,7 @@ fun MyTodoAppContent(
                         .weight(1f)
                 )
                 Button(onClick = {
-                    todoList.add(todo.value)
+                    todoList.add(Todo(text = todo.value, isCompleted = false))
                     todo.value = ""
                 }) {
                     Text(text = "追加")
@@ -97,8 +101,9 @@ fun MyTodoAppContent(
             }
             todoList.forEachIndexed { index, item ->
                 TodoItem(
-                    text = item,
-                    deleteTodo = { todoList.removeAt(index) }
+                    todo = item,
+                    deleteTodo = { todoList.removeAt(index) },
+                    completeTodo = { todoList[index] = item.copy(isCompleted = it) }
                 )
             }
         }
@@ -125,21 +130,44 @@ fun DefaultPreview() {
     MyApplicationTheme {
         MyTodoAppContent(
             todo = remember { mutableStateOf("文字を入れています???") },
-            todoList = remember { mutableStateListOf("長い長い長い長い長い長い長い長い長い長い長い長い長い TODO", "TODO 2") }
+            todoList = remember {
+                mutableStateListOf(
+                    Todo(text = "The King Of University Student TODO", isCompleted = false),
+                    Todo(text = "完了した TODO", isCompleted = true)
+                )
+            }
         )
     }
 }
 @Composable
-fun TodoItem(text: String, deleteTodo: () -> Unit) {
+fun TodoItem(
+    todo: Todo,
+    deleteTodo: () -> Unit,
+    completeTodo: (Boolean) -> Unit
+) {
+
+    val textDecoration =
+        if (todo.isCompleted) {
+            TextDecoration.LineThrough
+        } else {
+            null
+        }
+
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
-            text = text,
+            text = todo.text,
             modifier = Modifier
                 .padding(vertical = 4.dp)
-                .weight(1f)
+                .weight(1f),
+            textDecoration = textDecoration
+        )
+        Checkbox(
+            checked = todo.isCompleted,
+            onCheckedChange = completeTodo,
+            modifier = Modifier.padding(start = 4.dp)
         )
         IconButton(onClick = { deleteTodo() }) {
-            Icon(imageVector = Icons.Default.Delete, contentDescription ="削除ボタン")
+            Icon(imageVector = Icons.Default.Delete, contentDescription ="Delete")
         }
     }
 }
